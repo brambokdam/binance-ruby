@@ -34,13 +34,13 @@ module Binance
 
         def create!(icebergQuantity: nil, newClientOrderId: nil, newOrderResponseType: nil,
                     price: nil, quantity: nil, recvWindow: nil, stopPrice: nil, symbol: nil,
-                    side: nil, type: nil, timeInForce: nil, test: false)
+                    side: nil, type: nil, timeInForce: nil, test: false, quoteOrderQty: nil)
           timestamp = Configuration.timestamp
           params = {
             icebergQty: icebergQuantity, newClientOrderId: newClientOrderId,
             newOrderRespType: newOrderResponseType, price: price, quantity: quantity,
             recvWindow: recvWindow, stopPrice: stopPrice, symbol: symbol, side: side,
-            type: type, timeInForce: timeInForce, timestamp: timestamp,
+            type: type, timeInForce: timeInForce, timestamp: timestamp, quoteOrderQty: quoteOrderQty
           }.delete_if { |key, value| value.nil? }
           ensure_required_create_keys!(params: params)
           path = "/api/v3/order#{"/test" if test}"
@@ -81,11 +81,12 @@ module Binance
         def ensure_required_create_keys!(params:)
           keys = required_create_keys.dup.concat(additional_required_create_keys(type: params[:type]))
           missing_keys = keys.select { |key| params[key].nil? }
+          missing_keys = missing_keys + [:quantity, :quoteOrderQty] if params[:quantity].nil? && params[:quoteOrderQty].nil?
           raise Error.new(message: "required keys are missing: #{missing_keys.join(", ")}") unless missing_keys.empty?
         end
 
         def required_create_keys
-          [:symbol, :side, :type, :quantity, :timestamp].freeze
+          [:symbol, :side, :type, :timestamp].freeze
         end
       end
     end
